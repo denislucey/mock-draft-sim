@@ -16,7 +16,7 @@ function Simulator() {
   const [draftStarted, setDraftStarted] = useState(false);
 
   const [draftGrid, setDraftGrid] = useState(
-    Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)),
+    Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null))
   );
 
   const [playersTeam,setPlayersTeam] = useState(1);
@@ -29,6 +29,20 @@ function Simulator() {
     else return pick + 1 + 16 * round;
   }
 
+  function turnPickIntoRound(pick:number) {
+    return Math.floor(pick/NUM_TEAMS);
+  }
+
+  function turnPickIntoTeam(pick:number) {
+    console.log(currentPick)
+    if(currentRound<3)
+        if (currentRound % 2 == 1) return pick;
+        else return 33 - pick;
+    else
+        if (currentRound % 2 == 0) return pick % 16;
+        else return (currentRound*16) + 1 - pick;
+  }
+
 
   function isPlayersPick(playersTeam: number) {
     return !(playersTeam==currentPick && draftStarted);
@@ -36,6 +50,16 @@ function Simulator() {
 
   function draftPlayer(player: Map) {
     console.log(player.name);
+
+    // update grid
+    const newGrid = [...draftGrid];
+    newGrid[turnPickIntoRound(currentPick)][turnPickIntoTeam(currentPick)-1] = player;
+    setDraftGrid(newGrid);
+
+    // remove player from selection
+
+
+    // increment pick and round
     setCurrentPick(currentPick + 1);
     if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
   }
@@ -52,6 +76,7 @@ function Simulator() {
     setCurrentPick(1);
     setCurrentRound(1);
     setDraftStarted(false);
+    setDraftGrid(Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)))
   }
 
   function changeTeam() {
@@ -86,7 +111,10 @@ function Simulator() {
               {roundRow.map((pick, teamId) => (
                 <td>
                   {pick ? (
-                    <span>TAKEN</span>
+                    <div>
+                        <span>{pick.name}</span>
+                        <span>{pick.position}</span>
+                    </div>
                   ) : (
                     <span>Pick:{calcDraftPick(teamId, roundIdx)}</span>
                   )}
