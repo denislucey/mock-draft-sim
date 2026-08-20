@@ -13,9 +13,13 @@ function Simulator() {
   const [currentPick, setCurrentPick] = useState(1);
   const [currentRound, setCurrentRound] = useState(1);
 
+  const [draftStarted, setDraftStarted] = useState(false);
+
   const [draftGrid, setDraftGrid] = useState(
     Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)),
   );
+
+  const [playersTeam,setPlayersTeam] = useState(1);
 
   function calcDraftPick(pick: number, round: number) {
     if (round < 2)
@@ -25,12 +29,51 @@ function Simulator() {
     else return pick + 1 + 16 * round;
   }
 
+
+  function isPlayersPick(playersTeam: number) {
+    return !(playersTeam==currentPick && draftStarted);
+  }
+
+  function draftPlayer(player: Map) {
+    console.log(player.name);
+    setCurrentPick(currentPick + 1);
+    if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
+  }
+
+  /* TODO */
+  function startDraft() {
+    console.log("draft started");
+    setDraftStarted(true);
+  }
+
+  /* TODO */
+  function resetDraft() {
+    console.log("draft reset");
+    setCurrentPick(1);
+    setCurrentRound(1);
+    setDraftStarted(false);
+  }
+
+  function changeTeam() {
+    console.log("changingTeam");
+    const input = window.prompt("Please enter your pick 1-16:", "Default text");
+    setPlayersTeam(Number(input))
+  }
+
   return (
     <>
       <h1>Mock Draft Sim</h1>
       <h2>
         On the clock: Round {currentRound}, Pick {currentPick}
       </h2>
+      <h2>
+        You are team {playersTeam}
+      </h2>
+      <div>
+        <button onClick={() => startDraft()}>Start Draft</button>
+        <button onClick={() => resetDraft()}>Reset Draft</button>
+        <button onClick={() => changeTeam()}>Change Team</button>
+      </div>
       <table>
         <thead>
           {Array.from({ length: NUM_TEAMS }).map((_, i) => (
@@ -68,14 +111,19 @@ function Simulator() {
           </thead>
           <tbody>
             {availablePlayers.map((player, index) => (
-                <tr>
-                    <td>Yes</td>
-                    <td>{index+1}</td>
-                    <td>{player.name}</td>
-                    <td>{player.adp}</td>
-                    <td>{player.position}</td>
-                    <td>{player.team}</td>
-                </tr>
+              <tr>
+                <button
+                  onClick={() => draftPlayer(player)}
+                  disabled={isPlayersPick(playersTeam)}
+                >
+                  Draft Player
+                </button>
+                <td>{index + 1}</td>
+                <td>{player.name}</td>
+                <td>{player.adp}</td>
+                <td>{player.position}</td>
+                <td>{player.team}</td>
+              </tr>
             ))}
           </tbody>
         </table>
