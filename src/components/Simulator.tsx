@@ -14,12 +14,13 @@ function Simulator() {
   const [currentRound, setCurrentRound] = useState(1);
 
   const [draftStarted, setDraftStarted] = useState(false);
+  const [playerBoard, setPlayerBoard] = useState(availablePlayers)
 
   const [draftGrid, setDraftGrid] = useState(
-    Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null))
+    Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)),
   );
 
-  const [playersTeam,setPlayersTeam] = useState(1);
+  const [playersTeam, setPlayersTeam] = useState(1);
 
   function calcDraftPick(pick: number, round: number) {
     if (round < 2)
@@ -29,23 +30,21 @@ function Simulator() {
     else return pick + 1 + 16 * round;
   }
 
-  function turnPickIntoRound(pick:number) {
-    return Math.floor(pick/NUM_TEAMS);
+  // fix this nonsense
+  function turnPickIntoRound(pick: number) {
+    return Math.floor(pick / NUM_TEAMS);
   }
 
-  function turnPickIntoTeam(pick:number) {
-    console.log(currentPick)
-    if(currentRound<3)
-        if (currentRound % 2 == 1) return pick;
-        else return 33 - pick;
-    else
-        if (currentRound % 2 == 0) return pick % 16;
-        else return (currentRound*16) + 1 - pick;
+  function turnPickIntoTeam(pick: number) {
+    if (currentRound < 3)
+      if (currentRound % 2 == 1) return pick;
+      else return 33 - pick;
+    else if (currentRound % 2 == 0) return pick % 16;
+    else return currentRound * 16 + 1 - pick;
   }
-
 
   function isPlayersPick(playersTeam: number) {
-    return !(playersTeam==currentPick && draftStarted);
+    return !(playersTeam == turnPickIntoTeam(currentPick) && draftStarted);
   }
 
   function draftPlayer(player: Map) {
@@ -53,36 +52,38 @@ function Simulator() {
 
     // update grid
     const newGrid = [...draftGrid];
-    newGrid[turnPickIntoRound(currentPick)][turnPickIntoTeam(currentPick)-1] = player;
+    newGrid[turnPickIntoRound(currentPick)][turnPickIntoTeam(currentPick) - 1] =
+      player;
     setDraftGrid(newGrid);
 
     // remove player from selection
-
+    setPlayerBoard(playerBoard.filter(p=>p.id !== player.id))
 
     // increment pick and round
     setCurrentPick(currentPick + 1);
     if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
   }
 
-  /* TODO */
   function startDraft() {
     console.log("draft started");
     setDraftStarted(true);
   }
 
-  /* TODO */
   function resetDraft() {
     console.log("draft reset");
     setCurrentPick(1);
     setCurrentRound(1);
     setDraftStarted(false);
-    setDraftGrid(Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)))
+    setDraftGrid(
+      Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)),
+    );
+    setPlayerBoard(availablePlayers);
   }
 
   function changeTeam() {
     console.log("changingTeam");
     const input = window.prompt("Please enter your pick 1-16:", "Default text");
-    setPlayersTeam(Number(input))
+    setPlayersTeam(Number(input));
   }
 
   return (
@@ -91,9 +92,7 @@ function Simulator() {
       <h2>
         On the clock: Round {currentRound}, Pick {currentPick}
       </h2>
-      <h2>
-        You are team {playersTeam}
-      </h2>
+      <h2>You are team {playersTeam}</h2>
       <div>
         <button onClick={() => startDraft()}>Start Draft</button>
         <button onClick={() => resetDraft()}>Reset Draft</button>
@@ -112,8 +111,8 @@ function Simulator() {
                 <td>
                   {pick ? (
                     <div>
-                        <span>{pick.name}</span>
-                        <span>{pick.position}</span>
+                      <span>{pick.name}</span>
+                      <span>{pick.position}</span>
                     </div>
                   ) : (
                     <span>Pick:{calcDraftPick(teamId, roundIdx)}</span>
@@ -138,7 +137,7 @@ function Simulator() {
             </tr>
           </thead>
           <tbody>
-            {availablePlayers.map((player, index) => (
+            {playerBoard.map((player, index) => (
               <tr>
                 <button
                   onClick={() => draftPlayer(player)}
