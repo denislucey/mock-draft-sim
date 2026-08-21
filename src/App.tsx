@@ -1,11 +1,8 @@
-import './App.css'
-import Simulator from './components/Simulator'
+import "./App.css";
+import Simulator from "./components/Simulator.tsx";
 
 function App() {
-
-  return (
-    <Simulator />
-  )
+  return <Simulator />;
 }
 
-export default App
+export default App;
