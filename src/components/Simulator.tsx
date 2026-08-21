@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import PickMatrix from "./PickMatrix";
 import "./Simulator.css";
@@ -11,7 +11,7 @@ import csv from "../assets/2026_adp.csv?raw";
 interface playerRow {
   id: number;
   Name: string;
-  Position: string;
+  Position: "RB" | "TE" | "WR" | "QB" | "K" | "DEF";
   Team: string;
   ADP: string;
 }
@@ -43,6 +43,7 @@ function Simulator() {
 
   const [playersTeam, setPlayersTeam] = useState(1);
   const [isPlayersTurn, setIsPlayersTurn] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState("ALL");
 
   function calcDraftPick(pick: number, round: number) {
     if (round < 2)
@@ -61,12 +62,12 @@ function Simulator() {
     return Math.floor((pick - 1) / NUM_TEAMS);
   }
 
-  function turnPickIntoTeam(pick: number) {
-    if (currentRound < 3)
-      if (currentRound % 2 == 1) return pick;
+  function turnPickIntoTeam(pick: number, round: number) {
+    if (round < 3)
+      if (round % 2 == 1) return pick;
       else return 33 - pick;
-    else if (currentRound % 2 == 0) return ((pick - 1) % 16) + 1;
-    else return currentRound * 16 + 1 - pick;
+    else if (round % 2 == 0) return ((pick - 1) % 16) + 1;
+    else return round * 16 + 1 - pick;
   }
 
   function draftPlayer(player: playerRow) {
@@ -74,8 +75,9 @@ function Simulator() {
 
     // update grid
     const newGrid = [...draftGrid];
-    newGrid[turnPickIntoRound(currentPick)][turnPickIntoTeam(currentPick) - 1] =
-      player;
+    newGrid[turnPickIntoRound(currentPick)][
+      turnPickIntoTeam(currentPick, currentRound) - 1
+    ] = player;
     setDraftGrid(newGrid);
 
     // remove player from selection
@@ -115,6 +117,25 @@ function Simulator() {
     else setIsPlayersTurn(false);
   }
 
+  function assignPlayer(player: playerRow) {
+    const input = window.prompt("Please assign pick 1-240");
+    const newGrid = [...draftGrid];
+    newGrid[turnPickIntoRound(Number(input))][
+      turnPickIntoTeam(Number(input), turnPickIntoRound(Number(input)) + 1) - 1
+    ] = player;
+    setDraftGrid(newGrid);
+
+    // remove player from selection
+    setPlayerBoard(playerBoard.filter((p) => p.id !== player.id));
+  }
+
+ 
+
+  const filteredPlayerBoard = useMemo(() => {
+    if (selectedPosition == "ALL") return playerBoard;
+    return playerBoard.filter((p) => p.Position == selectedPosition)
+  }, [playerBoard, selectedPosition]);
+
   //MOST IMPORTANT
 
   // THINGS I want to address
@@ -125,6 +146,17 @@ function Simulator() {
   useEffect(() => {
     console.log(isPlayersTurn);
     if (!draftStarted) return;
+    if (currentPick == 241) return;
+    if (
+      draftGrid[turnPickIntoRound(currentPick)][
+        turnPickIntoTeam(currentPick, currentRound) - 1
+      ]
+    ) {
+      setCurrentPick(currentPick + 1);
+      if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
+      setIsPlayersTurn(PickMatrix[playersTeam].includes(currentPick + 1));
+      return;
+    }
     if (isPlayersTurn) return;
 
     const timer = setTimeout(() => {
@@ -132,7 +164,8 @@ function Simulator() {
       // my thought is to hardcode some rules about looking at what positions are needed
 
       // step one: look at already drafted players, compile positions
-      const playersPicks = PickMatrix[turnPickIntoTeam(currentPick)];
+      const playersPicks =
+        PickMatrix[turnPickIntoTeam(currentPick, currentRound)];
 
       let playerDict = {
         RB: 0,
@@ -144,7 +177,9 @@ function Simulator() {
       };
       for (const pick of playersPicks) {
         const selection: playerRow =
-          draftGrid[turnPickIntoRound(pick)][turnPickIntoTeam(currentPick) - 1];
+          draftGrid[turnPickIntoRound(pick)][
+            turnPickIntoTeam(currentPick, currentRound) - 1
+          ];
         if (selection)
           playerDict[selection.Position as keyof typeof playerDict] += 1;
         else continue;
@@ -252,6 +287,19 @@ function Simulator() {
       </table>
       <div>
         <h3>Available players</h3>
+        <p>Position filter</p>
+        <select
+            value={selectedPosition}
+            onChange={(e) => setSelectedPosition(e.target.value)}
+        >
+            <option value="ALL">ALL</option>
+            <option value="QB">QB</option>
+            <option value="WR">WR</option>
+            <option value="RB">RB</option>
+            <option value="TE">TE</option>
+            <option value="K">K</option>
+            <option value="DEF">DEF</option>
+        </select>
         <table>
           <thead>
             <tr>
@@ -261,10 +309,11 @@ function Simulator() {
               <th>ADP</th>
               <th>Position</th>
               <th>Team</th>
+              <th>Assign Spot</th>
             </tr>
           </thead>
           <tbody>
-            {playerBoard.map((player, index) => (
+            {filteredPlayerBoard.map((player, index) => (
               <tr key={player.id} className={player.Position}>
                 <td>
                   <button
@@ -279,6 +328,11 @@ function Simulator() {
                 <td>{player.ADP}</td>
                 <td>{player.Position}</td>
                 <td>{player.Team}</td>
+                <td>
+                  <button onClick={() => assignPlayer(player)}>
+                    Assign Player
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
