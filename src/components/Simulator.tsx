@@ -1,26 +1,39 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Papa from "papaparse";
 
 const NUM_TEAMS = 16;
 const NUM_ROUNDS = 15;
 
-const availablePlayers = [
-  { id: 1, name: "Denis Lucey", position: "QB", team: "NEP", adp: "1.1" },
-  { id: 2, name: "Askhath Burra", position: "RB", team: "LAL", adp: "2.6" },
-  { id: 3, name: "CMC", position: "RB", team: "SFG", adp: "3.8" },
-];
+import csv from "../assets/2026_adp.csv?raw";
 
 function Simulator() {
   const [currentPick, setCurrentPick] = useState(1);
   const [currentRound, setCurrentRound] = useState(1);
 
   const [draftStarted, setDraftStarted] = useState(false);
-  const [playerBoard, setPlayerBoard] = useState(availablePlayers)
+  const [availablePlayers, setAvailablePlayers] = useState([]);
+  const [playerBoard, setPlayerBoard] = useState(availablePlayers);
+
+  useEffect(() => {
+    Papa.parse(csv, {
+      header: true,
+      dynamicTyping: true,
+      complete: (results) => {
+        console.log(results);
+        const sortedData = results.data.sort(
+          (a, b) => parseFloat(a.ADP) - parseFloat(b.ADP),
+        );
+        setAvailablePlayers(sortedData);
+      },
+    });
+  }, []);
 
   const [draftGrid, setDraftGrid] = useState(
     Array.from({ length: NUM_ROUNDS }, () => Array(NUM_TEAMS).fill(null)),
   );
 
   const [playersTeam, setPlayersTeam] = useState(1);
+  const [isPlayersTurn, setIsPlayersTurn] = useState(false);
 
   function calcDraftPick(pick: number, round: number) {
     if (round < 2)
@@ -32,19 +45,15 @@ function Simulator() {
 
   // fix this nonsense
   function turnPickIntoRound(pick: number) {
-    return Math.floor(pick / NUM_TEAMS);
+    return Math.floor((pick - 1) / NUM_TEAMS);
   }
 
   function turnPickIntoTeam(pick: number) {
     if (currentRound < 3)
       if (currentRound % 2 == 1) return pick;
       else return 33 - pick;
-    else if (currentRound % 2 == 0) return pick % 16;
+    else if (currentRound % 2 == 0) return ((pick-1) % 16)+1;
     else return currentRound * 16 + 1 - pick;
-  }
-
-  function isPlayersPick(playersTeam: number) {
-    return !(playersTeam == turnPickIntoTeam(currentPick) && draftStarted);
   }
 
   function draftPlayer(player: Map) {
@@ -57,16 +66,20 @@ function Simulator() {
     setDraftGrid(newGrid);
 
     // remove player from selection
-    setPlayerBoard(playerBoard.filter(p=>p.id !== player.id))
+    setPlayerBoard(playerBoard.filter((p) => p.id !== player.id));
 
     // increment pick and round
     setCurrentPick(currentPick + 1);
     if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
+    setIsPlayersTurn(turnPickIntoTeam(currentPick + 1) == playersTeam);
   }
 
   function startDraft() {
-    console.log("draft started");
+    console.log(playerBoard);
     setDraftStarted(true);
+    if (playersTeam == 1) setIsPlayersTurn(true);
+    else setIsPlayersTurn(false);
+    setPlayerBoard(availablePlayers);
   }
 
   function resetDraft() {
@@ -84,7 +97,21 @@ function Simulator() {
     console.log("changingTeam");
     const input = window.prompt("Please enter your pick 1-16:", "Default text");
     setPlayersTeam(Number(input));
+    if (playersTeam == 1) setIsPlayersTurn(true);
+    else setIsPlayersTurn(false);
   }
+
+  useEffect(() => {
+    console.log(isPlayersTurn);
+    if (!draftStarted) return;
+    if (isPlayersTurn) return;
+
+    const timer = setTimeout(() => {
+      draftPlayer(playerBoard[0]);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  });
 
   return (
     <>
@@ -106,13 +133,13 @@ function Simulator() {
         </thead>
         <tbody>
           {draftGrid.map((roundRow, roundIdx) => (
-            <tr>
+            <tr key={roundIdx}>
               {roundRow.map((pick, teamId) => (
-                <td>
+                <td key={teamId}>
                   {pick ? (
                     <div>
-                      <span>{pick.name}</span>
-                      <span>{pick.position}</span>
+                      <span>{pick.Name}</span>
+                      <span>{pick.Position}</span>
                     </div>
                   ) : (
                     <span>Pick:{calcDraftPick(teamId, roundIdx)}</span>
@@ -138,18 +165,20 @@ function Simulator() {
           </thead>
           <tbody>
             {playerBoard.map((player, index) => (
-              <tr>
-                <button
-                  onClick={() => draftPlayer(player)}
-                  disabled={isPlayersPick(playersTeam)}
-                >
-                  Draft Player
-                </button>
+              <tr key={player.id}>
+                <td>
+                  <button
+                    onClick={() => draftPlayer(player)}
+                    disabled={!isPlayersTurn}
+                  >
+                    Draft Player
+                  </button>
+                </td>
                 <td>{index + 1}</td>
-                <td>{player.name}</td>
-                <td>{player.adp}</td>
-                <td>{player.position}</td>
-                <td>{player.team}</td>
+                <td>{player.Name}</td>
+                <td>{player.ADP}</td>
+                <td>{player.Position}</td>
+                <td>{player.Team}</td>
               </tr>
             ))}
           </tbody>
