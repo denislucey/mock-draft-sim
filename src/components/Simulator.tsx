@@ -6,6 +6,7 @@ import "./Simulator.css";
 const NUM_TEAMS = 16;
 const NUM_ROUNDS = 15;
 const SHEET_URL = "https://sheetdb.io/api/v1/oh7dymh21dcag";
+const flexPositions = ["RB", "WR", "TE"];
 
 import csv from "../assets/2026_adp.csv?raw";
 
@@ -175,6 +176,8 @@ function Simulator() {
 
   const filteredPlayerBoard = useMemo(() => {
     if (selectedPosition == "ALL") return playerBoard;
+    if (selectedPosition == "FLEX")
+      return playerBoard.filter((p) => flexPositions.includes(p.Position));
     return playerBoard.filter((p) => p.Position == selectedPosition);
   }, [playerBoard, selectedPosition]);
 
@@ -341,6 +344,7 @@ function Simulator() {
           <option value="TE">TE</option>
           <option value="K">K</option>
           <option value="DEF">DEF</option>
+          <option value="FLEX">FLEX</option>
         </select>
         <table>
           <thead>
