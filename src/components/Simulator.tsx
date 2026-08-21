@@ -249,7 +249,7 @@ function Simulator() {
           </thead>
           <tbody>
             {playerBoard.map((player, index) => (
-              <tr key={player.id}>
+              <tr key={player.id} className={player.Position}>
                 <td>
                   <button
                     onClick={() => draftPlayer(player)}
