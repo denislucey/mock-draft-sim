@@ -8,22 +8,29 @@ const NUM_ROUNDS = 15;
 
 import csv from "../assets/2026_adp.csv?raw";
 
+interface playerRow {
+  id: number;
+  Name: string;
+  Position: string;
+  Team: string;
+  ADP: string;
+}
+
 function Simulator() {
   const [currentPick, setCurrentPick] = useState(1);
   const [currentRound, setCurrentRound] = useState(1);
 
   const [draftStarted, setDraftStarted] = useState(false);
-  const [availablePlayers, setAvailablePlayers] = useState([]);
+  const [availablePlayers, setAvailablePlayers] = useState<playerRow[]>([]);
   const [playerBoard, setPlayerBoard] = useState(availablePlayers);
 
   useEffect(() => {
     Papa.parse(csv, {
       header: true,
       dynamicTyping: true,
-      complete: (results) => {
-        console.log(results);
+      complete: (results: any) => {
         const sortedData = results.data.sort(
-          (a, b) => parseFloat(a.ADP) - parseFloat(b.ADP),
+          (a: playerRow, b: playerRow) => parseFloat(a.ADP) - parseFloat(b.ADP),
         );
         setAvailablePlayers(sortedData);
       },
@@ -62,7 +69,7 @@ function Simulator() {
     else return currentRound * 16 + 1 - pick;
   }
 
-  function draftPlayer(player: Map) {
+  function draftPlayer(player: playerRow) {
     console.log(player.Name);
 
     // update grid
@@ -77,7 +84,7 @@ function Simulator() {
     // increment pick and round
     setCurrentPick(currentPick + 1);
     if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
-    setIsPlayersTurn(PickMatrix[playersTeam].includes(currentPick + 1));
+    setIsPlayersTurn(PickMatrix.get(playersTeam).includes(currentPick + 1));
   }
 
   function startDraft() {
@@ -125,7 +132,7 @@ function Simulator() {
       // my thought is to hardcode some rules about looking at what positions are needed
 
       // step one: look at already drafted players, compile positions
-      const playersPicks = PickMatrix[turnPickIntoTeam(currentPick)];
+      const playersPicks = PickMatrix.get(turnPickIntoTeam(currentPick));
 
       let playerDict = {
         RB: 0,
@@ -136,9 +143,10 @@ function Simulator() {
         DEF: 0,
       };
       for (const pick of playersPicks) {
-        const selection =
+        const selection: playerRow =
           draftGrid[turnPickIntoRound(pick)][turnPickIntoTeam(currentPick) - 1];
-        if (selection) playerDict[selection.Position] += 1;
+        if (selection)
+          playerDict[selection.Position as keyof typeof playerDict] += 1;
         else continue;
       }
       console.log(playerDict);
@@ -196,7 +204,7 @@ function Simulator() {
       draftPlayer(
         filteredPlayerBoard[
           getRandomInt(
-            Math.ceil((positionsToDraft.length * (currentRound + 1)) / 10)+1,
+            Math.ceil((positionsToDraft.length * (currentRound + 1)) / 10) + 1,
           )
         ],
       );
