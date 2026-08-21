@@ -158,15 +158,19 @@ function Simulator() {
       if (playerDict["K"] < 1)
         if (currentRound == 10 && getRandomInt(currentRound) == 0)
           positionsToDraft.push("K");
-        else if (currentRound == 11 && getRandomInt(currentRound) <= 4)
+        else if (currentRound == 11 && getRandomInt(currentRound) <= 2)
           positionsToDraft.push("K");
-        else if (currentRound >= 12) positionsToDraft.push("K");
+        else if (currentRound == 12 && getRandomInt(currentRound) <= 4)
+          positionsToDraft.push("K");
+        else if (currentRound >= 13) positionsToDraft.push("K");
       if (playerDict["DEF"] < 1)
         if (currentRound == 10 && getRandomInt(currentRound) == 0)
           positionsToDraft.push("DEF");
-        else if (currentRound == 11 && getRandomInt(currentRound) <= 4)
+        else if (currentRound == 11 && getRandomInt(currentRound) <= 2)
           positionsToDraft.push("DEF");
-        else if (currentRound >= 12) positionsToDraft.push("DEF");
+        else if (currentRound == 12 && getRandomInt(currentRound) <= 4)
+          positionsToDraft.push("DEF");
+        else if (currentRound >= 13) positionsToDraft.push("DEF");
 
       //force rb/wr selections if team is too unbalanced
       if (currentRound >= 3 && playerDict["RB"] == 0) positionsToDraft = ["RB"];
@@ -190,7 +194,11 @@ function Simulator() {
 
       // randomly pick a player, as draft goes on, get more random
       draftPlayer(
-        filteredPlayerBoard[getRandomInt(Math.ceil((currentRound + 1) / 2))],
+        filteredPlayerBoard[
+          getRandomInt(
+            Math.ceil((positionsToDraft.length * (currentRound + 1)) / 10)+1,
+          )
+        ],
       );
     }, 5);
 
