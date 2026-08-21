@@ -5,6 +5,7 @@ import "./Simulator.css";
 
 const NUM_TEAMS = 16;
 const NUM_ROUNDS = 15;
+const SHEET_URL = "https://sheetdb.io/api/v1/oh7dymh21dcag";
 
 import csv from "../assets/2026_adp.csv?raw";
 
@@ -14,6 +15,14 @@ interface playerRow {
   Position: "RB" | "TE" | "WR" | "QB" | "K" | "DEF";
   Team: string;
   ADP: string;
+}
+
+interface apiPayload {
+  Time: string;
+  Pick: number;
+  Team: number;
+  Round: number;
+  Player: string;
 }
 
 function Simulator() {
@@ -33,7 +42,7 @@ function Simulator() {
           (a: playerRow, b: playerRow) => parseFloat(a.ADP) - parseFloat(b.ADP),
         );
         setAvailablePlayers(sortedData);
-        setPlayerBoard(sortedData)
+        setPlayerBoard(sortedData);
       },
     });
   }, []);
@@ -70,6 +79,40 @@ function Simulator() {
     else if (round % 2 == 0) return ((pick - 1) % 16) + 1;
     else return round * 16 + 1 - pick;
   }
+
+  function draftHumanPlayer(player: playerRow) {
+    logLog(player);
+    draftPlayer(player);
+  }
+
+  const logLog = async (player: playerRow): Promise<void> => {
+    // log
+
+    const new_data: apiPayload = {
+      Time: new Date().toISOString(),
+      Pick: currentPick,
+      Round: currentRound,
+      Team: playersTeam,
+      Player: player.Name,
+    };
+    try {
+      const response = await fetch(SHEET_URL, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: [new_data],
+        }),
+      });
+      if (!response.ok) {
+        console.log("got invalid response");
+      }
+    } catch (error) {
+      console.log("got error");
+    }
+  };
 
   function draftPlayer(player: playerRow) {
     console.log(player.Name);
@@ -242,7 +285,7 @@ function Simulator() {
           )
         ],
       );
-    }, 5);
+    }, 50);
 
     return () => clearTimeout(timer);
   });
@@ -316,7 +359,7 @@ function Simulator() {
               <tr key={player.id} className={player.Position}>
                 <td>
                   <button
-                    onClick={() => draftPlayer(player)}
+                    onClick={() => draftHumanPlayer(player)}
                     disabled={!isPlayersTurn}
                   >
                     Draft Player
