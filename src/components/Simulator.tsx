@@ -189,7 +189,9 @@ function Simulator() {
       );
 
       // randomly pick a player, as draft goes on, get more random
-      draftPlayer(filteredPlayerBoard[getRandomInt(currentRound)]);
+      draftPlayer(
+        filteredPlayerBoard[getRandomInt(Math.ceil((currentRound + 1) / 2))],
+      );
     }, 5);
 
     return () => clearTimeout(timer);
