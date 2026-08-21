@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Papa from "papaparse";
+import PickMatrix from "./PickMatrix";
+import "./Simulator.css";
 
 const NUM_TEAMS = 16;
 const NUM_ROUNDS = 15;
@@ -43,6 +45,10 @@ function Simulator() {
     else return pick + 1 + 16 * round;
   }
 
+  function getRandomInt(max: number) {
+    return Math.floor(Math.random() * max);
+  }
+
   // fix this nonsense
   function turnPickIntoRound(pick: number) {
     return Math.floor((pick - 1) / NUM_TEAMS);
@@ -52,12 +58,12 @@ function Simulator() {
     if (currentRound < 3)
       if (currentRound % 2 == 1) return pick;
       else return 33 - pick;
-    else if (currentRound % 2 == 0) return ((pick-1) % 16)+1;
+    else if (currentRound % 2 == 0) return ((pick - 1) % 16) + 1;
     else return currentRound * 16 + 1 - pick;
   }
 
   function draftPlayer(player: Map) {
-    console.log(player.name);
+    console.log(player.Name);
 
     // update grid
     const newGrid = [...draftGrid];
@@ -71,11 +77,10 @@ function Simulator() {
     // increment pick and round
     setCurrentPick(currentPick + 1);
     if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
-    setIsPlayersTurn(turnPickIntoTeam(currentPick + 1) == playersTeam);
+    setIsPlayersTurn(PickMatrix[playersTeam].includes(currentPick + 1));
   }
 
   function startDraft() {
-    console.log(playerBoard);
     setDraftStarted(true);
     if (playersTeam == 1) setIsPlayersTurn(true);
     else setIsPlayersTurn(false);
@@ -95,11 +100,20 @@ function Simulator() {
 
   function changeTeam() {
     console.log("changingTeam");
-    const input = window.prompt("Please enter your pick 1-16:", "Default text");
+    const input = window.prompt(
+      "Please enter your pick 1-16, 0 autosims the whole draft",
+    );
     setPlayersTeam(Number(input));
     if (playersTeam == 1) setIsPlayersTurn(true);
     else setIsPlayersTurn(false);
   }
+
+  //MOST IMPORTANT
+
+  // THINGS I want to address
+  /*
+  defense and kicker are still taken too often, barely any taken before round 11
+  */
 
   useEffect(() => {
     console.log(isPlayersTurn);
@@ -107,8 +121,76 @@ function Simulator() {
     if (isPlayersTurn) return;
 
     const timer = setTimeout(() => {
-      draftPlayer(playerBoard[0]);
-    }, 500);
+      //figure out what the draft logic is going to be
+      // my thought is to hardcode some rules about looking at what positions are needed
+
+      // step one: look at already drafted players, compile positions
+      const playersPicks = PickMatrix[turnPickIntoTeam(currentPick)];
+
+      let playerDict = {
+        RB: 0,
+        WR: 0,
+        TE: 0,
+        QB: 0,
+        K: 0,
+        DEF: 0,
+      };
+      for (const pick of playersPicks) {
+        const selection =
+          draftGrid[turnPickIntoRound(pick)][turnPickIntoTeam(currentPick) - 1];
+        if (selection) playerDict[selection.Position] += 1;
+        else continue;
+      }
+      console.log(playerDict);
+
+      // step 2: eliminate positions based off of hardcoded rules
+
+      let positionsToDraft = ["RB", "WR"];
+
+      // need to think more ab these
+      if (playerDict["QB"] < 1) positionsToDraft.push("QB");
+      else if (playerDict["QB"] < 2 && currentRound > 9)
+        positionsToDraft.push("QB");
+      if (playerDict["TE"] < 1) positionsToDraft.push("TE");
+      else if (playerDict["TE"] < 2 && currentRound > 9)
+        positionsToDraft.push("TE");
+
+      if (playerDict["K"] < 1)
+        if (currentRound == 10 && getRandomInt(currentRound) == 0)
+          positionsToDraft.push("K");
+        else if (currentRound == 11 && getRandomInt(currentRound) <= 4)
+          positionsToDraft.push("K");
+        else if (currentRound >= 12) positionsToDraft.push("K");
+      if (playerDict["DEF"] < 1)
+        if (currentRound == 10 && getRandomInt(currentRound) == 0)
+          positionsToDraft.push("DEF");
+        else if (currentRound == 11 && getRandomInt(currentRound) <= 4)
+          positionsToDraft.push("DEF");
+        else if (currentRound >= 12) positionsToDraft.push("DEF");
+
+      //force rb/wr selections if team is too unbalanced
+      if (currentRound >= 3 && playerDict["RB"] == 0) positionsToDraft = ["RB"];
+      if (currentRound >= 4 && playerDict["WR"] == 0) positionsToDraft = ["WR"];
+
+      if (currentRound >= 6 && playerDict["RB"] < 2) positionsToDraft = ["RB"];
+      if (currentRound >= 7 && playerDict["WR"] < 2) positionsToDraft = ["WR"];
+
+      if (currentRound == 14 && playerDict["DEF"] + playerDict["K"] == 0)
+        if (getRandomInt(2) == 0) positionsToDraft = ["K"];
+        else positionsToDraft = ["DEF"];
+
+      if (currentRound == 15 && playerDict["DEF"] == 0)
+        positionsToDraft = ["DEF"];
+      if (currentRound == 15 && playerDict["K"] == 0) positionsToDraft = ["K"];
+
+      // filter to positions we're taking
+      const filteredPlayerBoard = playerBoard.filter((p) =>
+        positionsToDraft.includes(p.Position),
+      );
+
+      // randomly pick a player, as draft goes on, get more random
+      draftPlayer(filteredPlayerBoard[getRandomInt(currentRound)]);
+    }, 5);
 
     return () => clearTimeout(timer);
   });
@@ -135,7 +217,7 @@ function Simulator() {
           {draftGrid.map((roundRow, roundIdx) => (
             <tr key={roundIdx}>
               {roundRow.map((pick, teamId) => (
-                <td key={teamId}>
+                <td key={teamId} className={pick ? pick.Position : "draftSpot"}>
                   {pick ? (
                     <div>
                       <span>{pick.Name}</span>

@@ -1,0 +1,29 @@
+.draftSpot {
+  text-align: center;
+  background-color: lightgray;
+}
+
+.RB {
+  background-color: lightgreen;
+  text-align: center;
+}
+
+.WR {
+  background-color: lightblue;
+  text-align: center;
+}
+.QB {
+  background-color: lightcoral;
+  text-align: center;
+}
+.TE {
+  background-color: lightsalmon;
+  text-align: center;
+}
+.K {
+    background-color: lavender;
+    text-align: center;
+}
+.DEF {
+    background-color: lightgoldenrodyellow;
+}
