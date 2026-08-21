@@ -84,7 +84,7 @@ function Simulator() {
     // increment pick and round
     setCurrentPick(currentPick + 1);
     if (currentPick % 16 == 0) setCurrentRound(currentRound + 1);
-    setIsPlayersTurn(PickMatrix.get(playersTeam).includes(currentPick + 1));
+    setIsPlayersTurn(PickMatrix[playersTeam].includes(currentPick + 1));
   }
 
   function startDraft() {
@@ -132,7 +132,7 @@ function Simulator() {
       // my thought is to hardcode some rules about looking at what positions are needed
 
       // step one: look at already drafted players, compile positions
-      const playersPicks = PickMatrix.get(turnPickIntoTeam(currentPick));
+      const playersPicks = PickMatrix[turnPickIntoTeam(currentPick)];
 
       let playerDict = {
         RB: 0,
