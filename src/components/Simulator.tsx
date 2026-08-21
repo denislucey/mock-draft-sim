@@ -82,7 +82,7 @@ function Simulator() {
   }
 
   function draftHumanPlayer(player: playerRow) {
-    // logLog(player);
+    logLog(player);
     draftPlayer(player);
   }
 
