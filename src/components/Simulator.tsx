@@ -33,6 +33,7 @@ function Simulator() {
           (a: playerRow, b: playerRow) => parseFloat(a.ADP) - parseFloat(b.ADP),
         );
         setAvailablePlayers(sortedData);
+        setPlayerBoard(sortedData)
       },
     });
   }, []);
@@ -93,7 +94,7 @@ function Simulator() {
     setDraftStarted(true);
     if (playersTeam == 1) setIsPlayersTurn(true);
     else setIsPlayersTurn(false);
-    setPlayerBoard(availablePlayers);
+    // setPlayerBoard(availablePlayers);
   }
 
   function resetDraft() {
@@ -129,11 +130,9 @@ function Simulator() {
     setPlayerBoard(playerBoard.filter((p) => p.id !== player.id));
   }
 
- 
-
   const filteredPlayerBoard = useMemo(() => {
     if (selectedPosition == "ALL") return playerBoard;
-    return playerBoard.filter((p) => p.Position == selectedPosition)
+    return playerBoard.filter((p) => p.Position == selectedPosition);
   }, [playerBoard, selectedPosition]);
 
   //MOST IMPORTANT
@@ -289,16 +288,16 @@ function Simulator() {
         <h3>Available players</h3>
         <p>Position filter</p>
         <select
-            value={selectedPosition}
-            onChange={(e) => setSelectedPosition(e.target.value)}
+          value={selectedPosition}
+          onChange={(e) => setSelectedPosition(e.target.value)}
         >
-            <option value="ALL">ALL</option>
-            <option value="QB">QB</option>
-            <option value="WR">WR</option>
-            <option value="RB">RB</option>
-            <option value="TE">TE</option>
-            <option value="K">K</option>
-            <option value="DEF">DEF</option>
+          <option value="ALL">ALL</option>
+          <option value="QB">QB</option>
+          <option value="WR">WR</option>
+          <option value="RB">RB</option>
+          <option value="TE">TE</option>
+          <option value="K">K</option>
+          <option value="DEF">DEF</option>
         </select>
         <table>
           <thead>
