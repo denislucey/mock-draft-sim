@@ -5,8 +5,7 @@ import "./Simulator.css";
 
 const NUM_TEAMS = 16;
 const NUM_ROUNDS = 15;
-const SHEET_URL = "https://sheetdb.io/api/v1/oh7dymh21dcag";
-const SHEET_URL_2 = "https://sheetdb.io/api/v1/yxgdn0dk9vvck";
+// const SHEET_URL = "https://sheetdb.io/api/v1/oh7dymh21dcag";
 const flexPositions = ["RB", "WR", "TE"];
 
 import csv from "../assets/2026_adp.csv?raw";
@@ -19,21 +18,13 @@ interface playerRow {
   ADP: string;
 }
 
-interface apiPayload {
-  Time: string;
-  Pick: number;
-  Team: number;
-  Round: number;
-  Player: string;
-}
-
-interface apiPayload2 {
-  Pick: number;
-  Team: number;
-  Round: number;
-  Player: string;
-  ADP: number;
-}
+// interface apiPayload {
+//   Time: string;
+//   Pick: number;
+//   Team: number;
+//   Round: number;
+//   Player: string;
+// }
 
 function Simulator() {
   const [currentPick, setCurrentPick] = useState(1);
@@ -95,63 +86,34 @@ function Simulator() {
     draftPlayer(player);
   }
 
-  const logLog2 = async (player: playerRow): Promise<void> => {
-    // log
+//   const logLog = async (player: playerRow): Promise<void> => {
+//     // log
 
-    const new_data: apiPayload2 = {
-      Pick: currentPick,
-      Round: currentRound,
-      Team: playersTeam,
-      Player: player.Name,
-      ADP: player.ADP,
-    };
-    try {
-      const response = await fetch(SHEET_URL_2, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: [new_data],
-        }),
-      });
-      if (!response.ok) {
-        console.log("got invalid response");
-      }
-    } catch (error) {
-      console.log("got error");
-    }
-  };
-
-  const logLog = async (player: playerRow): Promise<void> => {
-    // log
-
-    const new_data: apiPayload = {
-      Time: new Date().toISOString(),
-      Pick: currentPick,
-      Round: currentRound,
-      Team: playersTeam,
-      Player: player.Name,
-    };
-    try {
-      const response = await fetch(SHEET_URL, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: [new_data],
-        }),
-      });
-      if (!response.ok) {
-        console.log("got invalid response");
-      }
-    } catch (error) {
-      console.log("got error");
-    }
-  };
+//     const new_data: apiPayload = {
+//       Time: new Date().toISOString(),
+//       Pick: currentPick,
+//       Round: currentRound,
+//       Team: playersTeam,
+//       Player: player.Name,
+//     };
+//     try {
+//       const response = await fetch(SHEET_URL, {
+//         method: "POST",
+//         headers: {
+//           Accept: "application/json",
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           data: [new_data],
+//         }),
+//       });
+//       if (!response.ok) {
+//         console.log("got invalid response");
+//       }
+//     } catch (error) {
+//       console.log("got error");
+//     }
+//   };
 
   function draftPlayer(player: playerRow) {
     console.log(player.Name);
