@@ -6,6 +6,7 @@ import "./Simulator.css";
 const NUM_TEAMS = 16;
 const NUM_ROUNDS = 15;
 const SHEET_URL = "https://sheetdb.io/api/v1/oh7dymh21dcag";
+const SHEET_URL_2 = "https://sheetdb.io/api/v1/yxgdn0dk9vvck";
 const flexPositions = ["RB", "WR", "TE"];
 
 import csv from "../assets/2026_adp.csv?raw";
@@ -24,6 +25,14 @@ interface apiPayload {
   Team: number;
   Round: number;
   Player: string;
+}
+
+interface apiPayload2 {
+  Pick: number;
+  Team: number;
+  Round: number;
+  Player: string;
+  ADP: number;
 }
 
 function Simulator() {
@@ -82,9 +91,38 @@ function Simulator() {
   }
 
   function draftHumanPlayer(player: playerRow) {
-    logLog(player);
+    // logLog(player);
     draftPlayer(player);
   }
+
+  const logLog2 = async (player: playerRow): Promise<void> => {
+    // log
+
+    const new_data: apiPayload2 = {
+      Pick: currentPick,
+      Round: currentRound,
+      Team: playersTeam,
+      Player: player.Name,
+      ADP: player.ADP,
+    };
+    try {
+      const response = await fetch(SHEET_URL_2, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: [new_data],
+        }),
+      });
+      if (!response.ok) {
+        console.log("got invalid response");
+      }
+    } catch (error) {
+      console.log("got error");
+    }
+  };
 
   const logLog = async (player: playerRow): Promise<void> => {
     // log
@@ -117,6 +155,8 @@ function Simulator() {
 
   function draftPlayer(player: playerRow) {
     console.log(player.Name);
+
+    // logLog2(player);
 
     // update grid
     const newGrid = [...draftGrid];
